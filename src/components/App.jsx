@@ -1,65 +1,45 @@
-import React, { Component } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Searchbar } from "./Searchbar/Searchbar";
 import { ImageGallery } from './ImageGallery/ImageGallery';
+import { Loader } from "./Loader/Loader";
 
-export class App extends Component {
-  constructor(props) {
-    super(props);
+export const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(12);
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalImages, setTotalImages] = useState(0);
 
-    this.state = {
-      query: '',
-      images: [],
-      page: 1,
-      perPage: 12,
-      isLoading: false,
-      totalImages: 0,
-    };
-  }
+  const handleSearch = useCallback((searchQuery) => {
+    setQuery(searchQuery);
+    setPage(1);
+    setImages([]); // очистити попередні результати
+  }, []);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.query !== prevState.query || this.state.page !== prevState.page) {
-      this.fetchImages();
-    }
-  }
-
-  handleSearch = (query) => {
-    this.setState({ query, images: [], page: 1, totalImages: 0 });
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  handleLoadMore = () => {
-    this.setState((prevState) => ({
-      page: prevState.page + 1
-    }));
-  };
+  useEffect(() => {
+    if (!query) return;
 
-  fetchImages = () => {
-    const { query, page, perPage } = this.state;
-    const apiKey = '41687911-62b9e6d772891b12bf67d3c73';
-    const apiUrl = `https://pixabay.com/api/?q=${query}&page=${page}&key=${apiKey}&image_type=photo&orientation=horizontal&per_page=${perPage}`;
-
-    this.setState({ isLoading: true });
-
-    fetch(apiUrl)
-      .then((response) => response.json())
-      .then((data) => {
-        this.setState((prevState) => ({
-          images: [...prevState.images, ...data.hits],
-          totalImages: data.total,
-          isLoading: false,
-        }));
+    setIsLoading(true);
+    // Тут твій API-запит або логіка пошуку
+    fetch(`https://api.example.com/search?q=${query}&page=${page}&per_page=${perPage}`)
+      .then(response => response.json())
+      .then(data => {
+        setImages(prevImages => page === 1 ? data.results : [...prevImages, ...data.results]);
+        setTotalImages(data.total);
       })
-      .catch((error) => {
-        console.error('Error fetching images:', error);
-        this.setState({ isLoading: false });
-      });
-  };
+      .catch(error => console.error(error))
+      .finally(() => setIsLoading(false));
+  }, [query, page, perPage]);
 
-  render() {
-    const { perPage, query, images, isLoading, totalImages, page } = this.state;
-
-    return (
-      <div>
-        <Searchbar onSubmit={this.handleSearch} />
+  return (
+    <div>
+      <Searchbar onSubmit={handleSearch} />
+      {images.length > 0 && (
         <ImageGallery
           query={query}
           page={page}
@@ -67,9 +47,10 @@ export class App extends Component {
           images={images}
           isLoading={isLoading}
           totalImages={totalImages}
-          onLoadMore={this.handleLoadMore}
+          onLoadMore={handleLoadMore}
         />
-      </div>
-    );
-  }
-}
+      )}
+      {isLoading && <Loader />}
+    </div>
+  );
+};
