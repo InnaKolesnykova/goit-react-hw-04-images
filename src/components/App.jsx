@@ -3,10 +3,10 @@ import { Searchbar } from "./Searchbar/Searchbar";
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Loader } from "./Loader/Loader";
 
-const API_KEY = "YOUR_PIXABAY_API_KEY"; // Встав свій ключ з https://pixabay.com/api/docs/
+const API_KEY = "YOUR_PIXABAY_API_KEY"; // встав сюди ключ з https://pixabay.com/api/docs/
 
 export const App = () => {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [perPage] = useState(12);
   const [images, setImages] = useState([]);
@@ -16,11 +16,11 @@ export const App = () => {
   const handleSearch = useCallback((searchQuery) => {
     setQuery(searchQuery);
     setPage(1);
-    setImages([]); 
+    setImages([]);
   }, []);
 
   const handleLoadMore = () => {
-    setPage((prevPage) => prevPage + 1);
+    setPage(prevPage => prevPage + 1);
   };
 
   useEffect(() => {
@@ -34,12 +34,12 @@ export const App = () => {
         );
         const data = await response.json();
 
-        setImages((prevImages) =>
+        setImages(prevImages =>
           page === 1 ? data.hits : [...prevImages, ...data.hits]
         );
         setTotalImages(data.totalHits);
       } catch (error) {
-        console.error("Помилка завантаження:", error);
+        console.error("Error fetching images:", error);
       } finally {
         setIsLoading(false);
       }
@@ -51,13 +51,15 @@ export const App = () => {
   return (
     <div>
       <Searchbar onSubmit={handleSearch} />
-      {images.length > 0 && (
-        <ImageGallery
-          images={images}
-          onLoadMore={handleLoadMore}
-          totalImages={totalImages}
-        />
-      )}
+      <ImageGallery
+        query={query}
+        page={page}
+        perPage={perPage}
+        images={images}
+        isLoading={isLoading}
+        totalImages={totalImages}
+        onLoadMore={handleLoadMore}
+      />
       {isLoading && <Loader />}
     </div>
   );
