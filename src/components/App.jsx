@@ -3,7 +3,7 @@ import { Searchbar } from "./Searchbar/Searchbar";
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Loader } from "./Loader/Loader";
 
-const API_KEY = "YOUR_PIXABAY_API_KEY"; // встав сюди ключ з https://pixabay.com/api/docs/
+const API_KEY = "51713200-5f6441d7b6d90526894d0907f";
 
 export const App = () => {
   const [query, setQuery] = useState('');
@@ -14,7 +14,7 @@ export const App = () => {
   const [totalImages, setTotalImages] = useState(0);
 
   const handleSearch = useCallback((searchQuery) => {
-    setQuery(searchQuery);
+    setQuery(searchQuery.trim());
     setPage(1);
     setImages([]);
   }, []);
@@ -51,16 +51,26 @@ export const App = () => {
   return (
     <div>
       <Searchbar onSubmit={handleSearch} />
-      <ImageGallery
-        query={query}
-        page={page}
-        perPage={perPage}
-        images={images}
-        isLoading={isLoading}
-        totalImages={totalImages}
-        onLoadMore={handleLoadMore}
-      />
+
+      {images.length > 0 && (
+        <ImageGallery
+          query={query}
+          page={page}
+          perPage={perPage}
+          images={images}
+          isLoading={isLoading}
+          totalImages={totalImages}
+          onLoadMore={handleLoadMore}
+        />
+      )}
+
       {isLoading && <Loader />}
+
+      {!isLoading && query && images.length === 0 && (
+        <p style={{ textAlign: "center", marginTop: "20px" }}>
+          Нічого не знайдено. Спробуйте інший запит.
+        </p>
+      )}
     </div>
   );
 };
