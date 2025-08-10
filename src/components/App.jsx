@@ -3,8 +3,10 @@ import { Searchbar } from "./Searchbar/Searchbar";
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Loader } from "./Loader/Loader";
 
+const API_KEY = "YOUR_PIXABAY_API_KEY"; // Встав свій ключ з https://pixabay.com/api/docs/
+
 export const App = () => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [perPage] = useState(12);
   const [images, setImages] = useState([]);
@@ -14,26 +16,36 @@ export const App = () => {
   const handleSearch = useCallback((searchQuery) => {
     setQuery(searchQuery);
     setPage(1);
-    setImages([]); // очистити попередні результати
+    setImages([]); 
   }, []);
 
   const handleLoadMore = () => {
-    setPage(prevPage => prevPage + 1);
+    setPage((prevPage) => prevPage + 1);
   };
 
   useEffect(() => {
     if (!query) return;
 
-    setIsLoading(true);
-    // Тут твій API-запит або логіка пошуку
-    fetch(`https://api.example.com/search?q=${query}&page=${page}&per_page=${perPage}`)
-      .then(response => response.json())
-      .then(data => {
-        setImages(prevImages => page === 1 ? data.results : [...prevImages, ...data.results]);
-        setTotalImages(data.total);
-      })
-      .catch(error => console.error(error))
-      .finally(() => setIsLoading(false));
+    const fetchImages = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `https://pixabay.com/api/?q=${encodeURIComponent(query)}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=${perPage}`
+        );
+        const data = await response.json();
+
+        setImages((prevImages) =>
+          page === 1 ? data.hits : [...prevImages, ...data.hits]
+        );
+        setTotalImages(data.totalHits);
+      } catch (error) {
+        console.error("Помилка завантаження:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchImages();
   }, [query, page, perPage]);
 
   return (
@@ -41,13 +53,9 @@ export const App = () => {
       <Searchbar onSubmit={handleSearch} />
       {images.length > 0 && (
         <ImageGallery
-          query={query}
-          page={page}
-          perPage={perPage}
           images={images}
-          isLoading={isLoading}
-          totalImages={totalImages}
           onLoadMore={handleLoadMore}
+          totalImages={totalImages}
         />
       )}
       {isLoading && <Loader />}
